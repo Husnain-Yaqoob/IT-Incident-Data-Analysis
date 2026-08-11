@@ -229,7 +229,7 @@ IT-Incident-Data-Analysis/
 ├── data/
 │   └── incident_event_log.csv
 │
-├── FYP_IT_Incident_Data_Preparation-final version.ipynb
+├── IT_Incident_Resolution_Prediction.ipynb
 ├── label_encoders.pkl
 ├── rf_incident_model.pkl
 └── README.md
