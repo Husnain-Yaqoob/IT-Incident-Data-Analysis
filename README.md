@@ -88,7 +88,7 @@ One notable pattern was the relationship between reassignment and resolution tim
 
 Incidents with no reassignments had a median resolution time of approximately **20 hours**, while incidents reassigned 10 times had a median resolution time of approximately **450 hours**.
 
-This indicated that reassignment count could be an important predictor of incident resolution time.
+On its own this made reassignment count look like an important predictor of resolution time. The feature importance analysis later showed otherwise, and the reason is covered under Model Evaluation below.
 
 ## Machine Learning
 
@@ -131,7 +131,23 @@ The models were evaluated using:
 - Residual analysis
 - Feature importance
 
-Feature importance analysis showed that **system modification count** and **reassignment count** were among the strongest predictors of incident resolution time.
+Feature importance analysis showed that the Random Forest relied overwhelmingly on a single feature:
+
+| Feature | Importance |
+|---|---:|
+| `sys_mod_count` | **0.913** |
+| `category` | 0.057 |
+| `reassignment_count` | 0.016 |
+| `priority` | 0.005 |
+| `urgency` | 0.004 |
+| `impact` | 0.003 |
+| `reopen_count` | 0.002 |
+
+This contradicted what the exploratory analysis had suggested. Reassignment count showed a strong relationship with resolution time on its own — a median of roughly 20 hours at zero reassignments against roughly 450 hours at ten — yet it accounts for only **1.6%** of the model's predictive weight, ranking below `category`.
+
+The explanation is that the two variables measure overlapping behaviour. An incident that is reassigned repeatedly is also modified repeatedly, so `sys_mod_count` already carries most of the information `reassignment_count` would have contributed. Once the stronger of two correlated predictors is in the model, the weaker one has little left to explain.
+
+The practical finding is therefore narrower than the exploratory charts implied: **how much a ticket is worked** predicts how long it takes, and system modification count is the better measure of that. A strong bivariate relationship is not the same thing as a strong predictor.
 
 The results also showed that the Decision Tree and Random Forest models substantially outperformed Linear Regression, indicating that the relationship between incident characteristics and resolution time is not purely linear.
 
@@ -219,7 +235,7 @@ The project demonstrates an end-to-end data science workflow combining data prep
 
 The Random Forest model achieved the best overall predictive performance, with a **test R² of 0.6944** and **5-fold cross-validation mean R² of 0.7094**.
 
-Analysis also highlighted the importance of operational factors such as reassignment and system modification activity in predicting incident resolution time.
+Analysis showed that how much a ticket is worked predicts its resolution time far better than the priority, impact or urgency it was logged with, with system modification count carrying 91% of the model's predictive weight.
 
 ## Repository Contents
 
