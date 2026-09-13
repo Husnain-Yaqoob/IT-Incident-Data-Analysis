@@ -55,6 +55,12 @@ The final target variable was:
 
 This represents the log-transformed incident resolution time.
 
+Resolution time was heavily right-skewed — most incidents closed within hours, a long
+tail ran to several hundred. The `log1p` transformation was applied to give the models
+a target they could fit:
+
+![Resolution time before and after log transformation](images/resolution-time-distribution.png)
+
 ## Features Used
 
 Seven features were selected for the prediction models:
@@ -143,6 +149,8 @@ Feature importance analysis showed that the Random Forest relied overwhelmingly 
 | `impact` | 0.003 |
 | `reopen_count` | 0.002 |
 
+![Random Forest feature importance, dominated by sys_mod_count at 0.913](images/feature-importance.png)
+
 This contradicted what the exploratory analysis had suggested. Reassignment count showed a strong relationship with resolution time on its own — a median of roughly 20 hours at zero reassignments against roughly 450 hours at ten — yet it accounts for only **1.6%** of the model's predictive weight, ranking below `category`.
 
 The explanation is that the two variables measure overlapping behaviour. An incident that is reassigned repeatedly is also modified repeatedly, so `sys_mod_count` already carries most of the information `reassignment_count` would have contributed. Once the stronger of two correlated predictors is in the model, the weaker one has little left to explain.
@@ -150,6 +158,31 @@ The explanation is that the two variables measure overlapping behaviour. An inci
 The practical finding is therefore narrower than the exploratory charts implied: **how much a ticket is worked** predicts how long it takes, and system modification count is the better measure of that. A strong bivariate relationship is not the same thing as a strong predictor.
 
 The results also showed that the Decision Tree and Random Forest models substantially outperformed Linear Regression, indicating that the relationship between incident characteristics and resolution time is not purely linear.
+
+![Actual versus predicted log resolution time for all three models](images/actual-vs-predicted.png)
+
+The spread is visible in all three panels. Linear Regression compresses its predictions
+toward the middle and cannot reach the long tail at all; the tree-based models track the
+diagonal far more closely but still scatter widely at short resolution times, where a
+large proportion of the incidents sit.
+
+## Limitations
+
+The dominant feature is a finding and a problem at the same time.
+
+`sys_mod_count` and `reassignment_count` are only known once an incident has been worked.
+Neither exists at the moment a ticket is raised. A model drawing 91% of its weight from
+`sys_mod_count` therefore cannot predict resolution time at intake — which is exactly when
+a service desk would most want the estimate.
+
+What it can do is estimate the remaining time for an incident already in progress, revising
+the figure as the ticket is modified. That is a narrower claim than "predicts resolution
+time", and it is the accurate one.
+
+Predicting at intake would mean restricting the feature set to what is known at creation —
+priority, impact, urgency, category, contact type, and the text of the report itself — and
+accepting a substantially lower R². Comparing the two is the natural next step for this
+project.
 
 ## Model Deployment
 
@@ -245,6 +278,7 @@ IT-Incident-Data-Analysis/
 ├── data/
 │   └── incident_event_log.csv
 │
+├── images/
 ├── IT_Incident_Resolution_Prediction.ipynb
 ├── label_encoders.pkl
 ├── rf_incident_model.pkl
